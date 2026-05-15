@@ -1,0 +1,11 @@
+# Dev dependencies — AI-Fiber-NLC
+# SPDX-License-Identifier: MIT
+
+-r requirements.txt
+
+# Testing
+pytest>=7.0.0
+
+# Linting
+ruff>=0.1.0
+mypy>=1.0.0

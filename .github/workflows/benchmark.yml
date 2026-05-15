@@ -1,0 +1,49 @@
+# benchmark.yml — 手動觸發完整 Benchmark 流程
+# MIT License — AI-Fiber-NLC
+
+name: Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      scene:
+        description: "Benchmark scene to run"
+        required: true
+        default: "mvb1"
+        type: choice
+        options:
+          - mvb1
+          - mvb2
+          - mvb3
+      model:
+        description: "Model to benchmark (default: mlp)"
+        required: false
+        default: "mlp"
+        type: string
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run benchmark
+        run: |
+          python -m src.benchmark.protocol --scene ${{ github.event.inputs.scene }}
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.event.inputs.scene }}
+          path: benchmark/results/

@@ -1,0 +1,70 @@
+# .gitignore — AI-Fiber-NLC
+# SPDX-License-Identifier: MIT
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+*.egg
+
+# ── Virtual environments ──
+venv/
+.venv/
+env/
+.conda/
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Jupyter ──
+.ipynb_checkpoints/
+
+# ── Data / Models (too large for git) ──
+data/*.npy
+data/*.npz
+models/*.pt
+models/*.pth
+models/*.ckpt
+*.h5
+
+# ── Benchmark results (generated) ──
+benchmark/results/
+benchmark/leaderboard.md
+
+# ── Signatures (generated per submission) ──
+*.sig
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── Environment / Secrets ──
+.env
+.env.local
+*.key
+*.pem
+
+# ── Hugging Face ──
+.huggingface/
+
+# ── Colab ──
+*.ipynb_checkpoints/
