@@ -99,15 +99,15 @@ class TestOutputShape:
     def test_single_pol_shape(self, mock_opticommpy):
         sim = FiberSimulator(MVB1)
         rx, tx = sim.propagate(0.0)
-        assert rx.shape == (MVB1.n_symbols,)
-        assert tx.shape == (MVB1.n_symbols,)
+        assert rx.shape == (MVB1.n_symbols * 2,)
+        assert tx.shape == (MVB1.n_symbols * 2,)
         assert rx.dtype == np.complex128
 
     def test_dual_pol_shape(self, mock_opticommpy):
         sim = FiberSimulator(MVB2)
         rx, tx = sim.propagate(0.0)
-        assert rx.shape == (2, MVB2.n_symbols)
-        assert tx.shape == (2, MVB2.n_symbols)
+        assert rx.shape == (2, MVB2.n_symbols * 2)
+        assert tx.shape == (2, MVB2.n_symbols * 2)
 
 
 # ──────────────────────────────────────────────
