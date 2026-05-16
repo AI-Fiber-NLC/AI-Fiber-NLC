@@ -1,4 +1,4 @@
 # SPDX-License-Identifier: MIT
-"""AI-Fiber-NLC — AI 光纖非線性補償開源框架."""
+"""AI-Fiber-NLC — AI-based nonlinear compensation for optical fiber systems."""
 
 __version__ = "0.1.0"

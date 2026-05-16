@@ -7,10 +7,10 @@ labels: ['benchmark', 'submission']
 
 ## Model Information
 
-- **Model Name:** 
+- **Model Name:**
 - **Model Type:** (e.g., MLP, CNN, Transformer, KAN, DBP)
-- **Author:** 
-- **GitHub Handle:** 
+- **Author:**
+- **GitHub Handle:**
 - **Date:** YYYY-MM-DD
 
 ## Benchmark Scenario
@@ -51,7 +51,7 @@ labels: ['benchmark', 'submission']
 ## Checklist
 
 - [ ] Results obtained using the official benchmark script (`benchmark/run.py`)
-- [ ] Training seed matches the scenario configuration
+- [ ] Training seed matches the scene configuration
 - [ ] Tested at minimum 3 power points within the specified range
 - [ ] Code follows the project coding style
 - [ ] Model weights are available (via Hugging Face or included in PR)

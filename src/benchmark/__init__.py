@@ -18,9 +18,7 @@ from src.benchmark.protocol import (
 
 __all__ = [
     "SceneParams",
-    "MVB1",
-    "MVB2",
-    "MVB3",
+    "MVB1", "MVB2", "MVB3",
     "SCENES",
     "ValidationError",
     "compute_composite_score",
