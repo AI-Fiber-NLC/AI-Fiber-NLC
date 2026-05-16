@@ -1,0 +1,23 @@
+# AI-Fiber-NLC Benchmark Scene: MVB-1
+# MIT License
+
+fiber:
+  length_km: 80.0
+  num_spans: 10
+  alpha_db_per_km: 0.2
+  D_ps_per_nm_km: 16.0
+  gamma_per_W_km: 1.3
+  pmd_ps_per_sqrt_km: 0.0
+
+signal:
+  modulation: "16QAM"
+  baud_rate_GBd: 32.0
+  polarization: "single"
+  pcs_enabled: false
+
+test:
+  tx_power_range_dbm: [-3.0, 5.0]
+  tx_power_points: 9
+  n_symbols: 65536
+  seed: 42
+  fec_threshold_ber: 0.0038
