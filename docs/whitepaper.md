@@ -146,7 +146,54 @@ All results use the MVB-1 scene (16QAM, 800km, single-pol, RRC pulse shaping). T
 - Without CPR, Q-factor drops to +0.16 to +0.29 dB, confirming CPR's dominant role.
 - The bottleneck at +1 to +5 dBm is EDFA ASE noise, not nonlinear distortion.
 
-### 3.3 MLP-NLC Preliminary Results
+### 3.3 MLP-NLC: DSP Chain Integrated Results
+
+Unlike the preliminary MLP results (Section 3.2), the following experiments
+integrate the MLP within the full DSP receiver chain:
+
+```
+RX -> EDC -> [MLP-NLC] -> Clock Recovery -> CPR -> Q-factor
+```
+
+The MLP is trained on EDC-compensated signals with the TX pulse-shaped signal
+as target. After training, the MLP output passes through clock recovery and
+CPR before Q-factor computation — ensuring a fair comparison with the baseline.
+
+**Full power sweep results (-3 to +5 dBm, MVB-1):**
+
+| Launch Power | Baseline (dB) | MLP Best (dB) | Improvement | Best Epoch |
+|-------------|---------------|---------------|-------------|------------|
+| -3.0 dBm | +1.91 | +2.01 | +0.10 | 2 |
+| -2.0 dBm | +1.96 | +2.01 | +0.05 | 1 |
+| -1.0 dBm | +1.97 | +1.98 | +0.01 | 1 |
+| 0.0 dBm | +1.96 | +1.96 | -0.00 | 1 |
+| +1.0 dBm | +2.08 | +1.92 | -0.16 | 1 |
+| +2.0 dBm | +2.20 | +1.93 | -0.27 | 1 |
+| +3.0 dBm | +2.17 | +1.94 | -0.23 | 1 |
+| +4.0 dBm | +2.04 | +1.92 | -0.12 | 1 |
+| +5.0 dBm | +1.94 | +1.92 | -0.02 | 1 |
+
+**Key observations:**
+
+- **MLP never significantly outperforms the DSP baseline.** At best, +0.10 dB
+  improvement at -3 dBm — within measurement noise.
+- **MLP overfits immediately.** Best Q-factor always occurs at epoch 1-2.
+  Further training causes Q-factor to degrade as the model memorizes ASE noise.
+- **At higher powers, MLP makes things worse** (up to -0.27 dB at +2 dBm).
+  The MLP fails to learn a useful nonlinear inverse mapping and instead
+  corrupts the already well-compensated EDC signal.
+- **The performance gap is consistent with Phase 0 findings:** at moderate
+  launch powers (+1 to +5 dBm), the bottleneck is EDFA ASE noise, not
+  nonlinear distortion. Neither DBP nor MLP can meaningfully improve upon
+  what linear DSP (EDC) and phase recovery (CPR) already achieve.
+
+These results define the challenge for AI-NLC: future models must demonstrate
+value in regimes where nonlinear effects dominate — either at significantly
+higher launch powers (>+7 dBm), longer distances (>1600km), or with
+architectures specifically designed for nonlinear phase noise compensation
+(Transformer, KAN, or hybrid DSP+AI approaches).
+
+### 3.4 MLP-NLC: Preliminary Results
 
 A memory-augmented MLP (memory_size=5, hidden=[256,256,128], 106K params) was trained on raw RX→TX pairs (MSE loss). Results:
 
