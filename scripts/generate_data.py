@@ -107,7 +107,7 @@ def main() -> None:
         "--scenarios",
         nargs="+",
         default=["mvb1"],
-        choices=["mvb1", "mvb2", "mvb3", "mvb4", "mvb5", "all"],
+        choices=["mvb1", "mvb2", "mvb3", "mvb4", "mvb5", "mvb6", "all"],
         help="Scenarios to generate (default: mvb1)",
     )
     args = parser.parse_args()

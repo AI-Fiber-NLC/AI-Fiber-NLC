@@ -107,11 +107,42 @@ MVB5 = SceneParams(
     n_symbols=2**16, seed=42, fec_threshold_ber=3.8e-3,
 )
 
+# High-nonlinearity regime: γ=10 (standard γ=1.3 × 7.7x)
+# Creates strong nonlinear phase noise: φ_NL ≈ 0.9 rad at 0 dBm
+# In this regime, EDC+CPR alone is insufficient — NLC algorithms
+# (DBP and AI) should show meaningful benefit.
+MVB6 = SceneParams(
+    name="MVB-6", fiber_length_km=80.0, num_spans=10,
+    alpha_db_per_km=0.2, D_ps_per_nm_km=16.0, gamma_per_W_km=10.0,
+    pmd_ps_per_sqrt_km=0.0, modulation="16QAM", baud_rate_GBd=32.0,
+    polarization="single", pcs_enabled=False,
+    tx_power_range_dbm=(0.0, 3.0), tx_power_points=4,
+    n_symbols=2**16, seed=42, fec_threshold_ber=3.8e-3,
+)
+
 # Extended scenes registry
 EXTENDED_SCENES: Dict[str, SceneParams] = {
     "mvb4": MVB4,
     "mvb5": MVB5,
+    "mvb6": MVB6,
 }
+
+# ── High-nonlinearity regime for AI-NLC evaluation ──
+# γ=10 (1/W·km) creates strong nonlinear phase noise (0.9 rad at 0 dBm)
+# This regime simulates fibers with enhanced nonlinearity or systems
+# operating at the edge of the nonlinear Shannon limit.
+# In this regime, EDC+CPR alone is insufficient, and NLC algorithms
+# (both DBP and AI) should show meaningful benefit.
+MVB6 = SceneParams(
+    name="MVB-6", fiber_length_km=80.0, num_spans=10,
+    alpha_db_per_km=0.2, D_ps_per_nm_km=16.0, gamma_per_W_km=10.0,
+    pmd_ps_per_sqrt_km=0.0, modulation="16QAM", baud_rate_GBd=32.0,
+    polarization="single", pcs_enabled=False,
+    tx_power_range_dbm=(0.0, 3.0), tx_power_points=4,
+    n_symbols=2**16, seed=42, fec_threshold_ber=3.8e-3,
+)
+
+EXTENDED_SCENES["mvb6"] = MVB6
 
 
 # ─────────────────────────────────────────────────────────────────────

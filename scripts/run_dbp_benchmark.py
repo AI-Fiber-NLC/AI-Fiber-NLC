@@ -108,7 +108,7 @@ def run_single(scenario_key: str, power_index: int, steps_per_span: int,
 def main():
     parser = argparse.ArgumentParser(description="Run DBP benchmark")
     parser.add_argument("--scenario", type=str, default="mvb1",
-                        choices=["mvb1", "mvb3", "mvb4", "mvb5"])
+                        choices=["mvb1", "mvb3", "mvb4", "mvb5", "mvb6"])
     parser.add_argument("--power-index", type=int, default=4)
     parser.add_argument("--steps", type=int, default=10)
     parser.add_argument("--data-dir", type=str, default="./data/raw")
