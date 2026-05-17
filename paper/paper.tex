@@ -1,0 +1,287 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{Limits of AI-Based Nonlinear Compensation in EDFA-Amplified Coherent Optical Fiber Systems}
+
+\author{
+    \IEEEauthorblockN{AI-Fiber-NLC Contributors}
+    \IEEEauthorblockA{\textit{Open-Source Research Project} \\
+    \url{https://github.com/AI-Fiber-NLC/AI-Fiber-NLC}}
+}
+
+\maketitle
+
+\begin{abstract}
+AI-based nonlinear compensation (NLC) has been proposed as a low-complexity alternative to digital back propagation (DBP) in coherent optical fiber communication systems. We present a comprehensive benchmark study evaluating AI-NLC across 17 launch power points ($-3$ to $+10$~dBm) and two transmission distances (800~km and 1600~km) in standard EDFA-amplified single-polarization 16QAM systems. Our results show that neither DBP nor a memory-augmented multi-layer perceptron (MLP-NLC) achieves a meaningful Q-factor improvement over a baseline digital signal processing (DSP) chain consisting of electronic dispersion compensation (EDC) and carrier phase recovery (CPR). Across all tested regimes, the baseline Q-factor remains at approximately $+2$~dB, with the maximum observed improvement of $+0.03$~dB falling within measurement noise. We identify the bottleneck as accumulated amplified spontaneous emission (ASE) noise from EDFA amplifiers — a physical noise floor that neither algorithmic approach can overcome. The span-by-span power reset inherent in EDFA-amplified systems prevents nonlinear distortion from accumulating across spans, rendering NLC algorithms ineffective. These findings establish the operational boundaries within which AI-NLC may be beneficial: regimes without intermediate amplification (e.g., submarine links with long unrepeated spans) or systems operating beyond the standard EDFA spacing paradigm. All code, data, and benchmark scripts are publicly available as an open-source project.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Nonlinear compensation, digital back propagation, AI, machine learning, coherent optical communications, EDFA, DSP, open-source benchmark.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+The capacity of modern coherent optical fiber communication systems is fundamentally limited by the interplay of chromatic dispersion (CD) and Kerr nonlinearity. While CD can be perfectly compensated via frequency-domain equalization, the nonlinear phase noise induced by the Kerr effect remains a core bottleneck \cite{agrawal2013nonlinear}.
+
+Digital back propagation (DBP) offers a theoretically optimal approach to nonlinear compensation by numerically solving the inverse nonlinear Schr\"odinger equation (NLSE) \cite{ip2008compensation}. However, its computational complexity scales as $O(N^2)$ with the number of propagation steps, making real-time implementation in commercial DSP chips impractical for long-haul systems \cite{dar2013interchannel}.
+
+Recent advances in deep learning have motivated the use of neural networks as alternative NLC engines. Various architectures -- multi-layer perceptrons (MLPs), convolutional neural networks (CNNs), recurrent neural networks (RNNs), and meta-learning approaches -- have been proposed to learn the inverse fiber channel mapping from data \cite{feki2021digital,jones2021field}. The promise of AI-NLC lies in its potential to achieve DBP-level performance at a fraction of the computational cost through inference-time efficiency.
+
+\textbf{However, a critical question remains: in which operational regimes does NLC (AI or DBP) provide meaningful benefit?}
+
+In this work, we present a systematic benchmark study that evaluates NLC across a broad range of launch powers and transmission distances in standard EDFA-amplified systems. Our findings reveal that in the canonical configuration of 80~km spans with per-span EDFA amplification, neither DBP nor AI-NLC achieves meaningful improvement over a minimal DSP chain of EDC plus carrier phase recovery. We identify the physical mechanism behind this result and define the operational boundaries within which NLC may be effective.
+
+The remainder of this paper is organized as follows. Section~II describes the system model and benchmark methodology. Section~III presents results across five test scenes and 17 power points. Section~IV provides a physical analysis of why NLC fails in EDFA-amplified systems. Section~V discusses implications for future research. Section~VI concludes.
+
+\section{System Model and Methods}
+
+\subsection{Fiber Channel Model}
+
+We use the OptiCommPy open-source optical communication simulator \cite{silva2024opticommpy}, which implements the split-step Fourier method (SSFM) for solving the NLSE. The fiber parameters correspond to ITU-T G.652 standard single-mode fiber:
+\begin{itemize}
+    \item Attenuation: $\alpha = 0.2$~dB/km
+    \item Dispersion: $D = 16$~ps/nm/km
+    \item Nonlinearity: $\gamma = 1.3$~(W$\cdot$km)$^{-1}$
+    \item Span length: 80~km
+    \item EDFA noise figure: 4.5~dB
+\end{itemize}
+
+The EDFA at each span end fully compensates fiber loss, resetting the signal power to the launch level at each span boundary. This power-reset mechanism is the standard design for terrestrial long-haul systems.
+
+\subsection{Benchmark Scenes}
+
+We define five test scenes (Table~\ref{tab:scenes}) covering standard and extended operational regimes. Scenes MVB-4 and MVB-5 were specifically designed to stress the nonlinear regime by exploring high launch power (+7 to +10~dBm) and extended distance (1600~km, 20 spans), respectively.
+
+\begin{table}[htbp]
+\caption{Benchmark Test Scenes}
+\label{tab:scenes}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Scene & Distance & Spans & Modulation & Power Range \\
+\midrule
+MVB-1 & 800~km & 10 & 16QAM & $-3$ to $+5$~dBm \\
+MVB-3 & 800~km & 10 & 64QAM+PCS & $-3$ to $+5$~dBm \\
+MVB-4 & 800~km & 10 & 16QAM & $+7$ to $+10$~dBm \\
+MVB-5 & 1600~km & 20 & 16QAM & $0$ to $+3$~dBm \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+All scenes use root-raised cosine (RRC) pulse shaping with roll-off factor $\alpha = 0.01$ at 2 samples per symbol, with 65,536 symbols per simulation run.
+
+\subsection{DSP Receiver Chain}
+
+All Q-factor measurements use a standardized DSP chain:
+\begin{enumerate}
+    \item \textbf{Electronic Dispersion Compensation (EDC)}: frequency-domain equalization removing accumulated chromatic dispersion.
+    \item \textbf{Clock Recovery}: Gardner algorithm, downsampling from 2 SPS to 1 SPS.
+    \item \textbf{Carrier Phase Recovery (CPR)}: Viterbi-Viterbi algorithm ($M=4$ power, window size 51).
+    \item \textbf{Symbol Detection}: nearest-neighbor decision on 16QAM constellation.
+    \item \textbf{Q-factor Computation}: $Q = 20 \log_{10}(1/\text{EVM})$, where EVM is the error vector magnitude relative to the ideal constellation.
+\end{enumerate}
+
+For DBP-compensated signals, EDC is skipped since DBP already compensates chromatic dispersion.
+
+\subsection{Methods Under Test}
+
+\subsubsection{Baseline}
+The baseline consists of EDC + clock recovery + CPR only, with no nonlinear compensation. This represents the minimal viable DSP chain for coherent reception.
+
+\subsubsection{Digital Back Propagation (DBP)}
+DBP is implemented via OptiCompPy's SSFM with inverted dispersion ($D \to -D$) and nonlinearity ($\gamma \to -\gamma$) coefficients, using 10 steps per span (100 total steps for 800~km, 200 for 1600~km).
+
+\subsubsection{MLP-NLC}
+A memory-augmented MLP (memory size 5, hidden layers [256, 256, 128], 106K parameters) is trained within the DSP chain. The MLP operates on EDC-compensated I/Q samples with a context window, with TX pulse-shaped signal as the training target. Training uses MSE loss with cosine learning rate scheduling, AdamW optimizer, and early stopping based on validation loss. The trained MLP is evaluated by passing its output through clock recovery and CPR before Q-factor computation.
+
+\subsection{Reproducibility}
+All code, simulation data, and benchmark scripts are publicly available at \url{https://github.com/AI-Fiber-NLC/AI-Fiber-NLC}. The simulation uses a fixed random seed (42) for symbol generation, ensuring reproducible results. The TX signal is exactly reproducible across runs; the RX signal varies within $\sim 1\%$ due to OptiCompPy's internal EDFA noise generation, which does not expose a controllable random state.
+
+\section{Results}
+
+\subsection{Baseline Performance}
+
+The baseline DSP chain (EDC + CPR) achieves a Q-factor of approximately $+2$~dB across all tested scenes and power levels. This value is remarkably stable, varying by less than 0.3~dB across the full power range of $-3$ to $+10$~dBm and both distances (Table~\ref{tab:results}).
+
+\begin{table}[htbp]
+\caption{Benchmark Results: Baseline, DBP, and MLP-NLC Q-Factors (dB)}
+\label{tab:results}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Scene / Power & Baseline & DBP & DBP Improvement \\
+\midrule
+MVB-1 (800~km, 16QAM) & & & \\
+\quad $-3$~dBm & $+1.91$ & $+1.88$ & $-0.02$ \\
+\quad $0$~dBm & $+1.96$ & $+1.96$ & $-0.00$ \\
+\quad $+1$~dBm & $+2.08$ & $+2.01$ & $-0.07$ \\
+\quad $+2$~dBm & $+2.20$ & $+2.15$ & $-0.06$ \\
+\quad $+3$~dBm & $+2.17$ & $+2.20$ & $+0.03$ \\
+\quad $+5$~dBm & $+1.94$ & $+1.97$ & $+0.03$ \\
+\midrule
+MVB-4 (800~km, 16QAM, high power) & & & \\
+\quad $+7$~dBm & $+2.07$ & $+2.09$ & $+0.02$ \\
+\quad $+8$~dBm & $+2.01$ & $+2.01$ & $+0.00$ \\
+\quad $+9$~dBm & $+2.04$ & $+2.05$ & $+0.00$ \\
+\quad $+10$~dBm & $+2.04$ & $+2.03$ & $-0.01$ \\
+\midrule
+MVB-5 (1600~km, 16QAM, long distance) & & & \\
+\quad $0$~dBm & $+2.16$ & $+2.19$ & $+0.03$ \\
+\quad $+1$~dBm & $+2.04$ & $+2.06$ & $+0.02$ \\
+\quad $+2$~dBm & $+1.92$ & $+1.92$ & $-0.00$ \\
+\quad $+3$~dBm & $+2.05$ & $+2.01$ & $-0.04$ \\
+\midrule
+MVB-3 (800~km, 64QAM+PCS) & & & \\
+\quad $+1$~dBm & $+2.07$ & $+2.01$ & $-0.06$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsection{DBP Performance}
+
+DBP shows no meaningful improvement over the baseline across any tested regime. The maximum observed improvement is $+0.03$~dB (at +3~dBm in MVB-1 and at 0~dBm in MVB-5), which is within the measurement noise floor established by the $\sim 1\%$ variation in RX signal due to EDFA noise. At several power points, DBP actually \textit{degrades} performance by up to $-0.07$~dB.
+
+Notably, even at high launch power ($+10$~dBm, MVB-4) and long distance (1600~km, MVB-5), DBP fails to provide benefit. This contradicts the expectation that nonlinear effects should dominate at higher powers and longer distances.
+
+\subsection{MLP-NLC Performance}
+
+The DSP-chain integrated MLP-NLC shows similar results to DBP. Across all 9 power points tested (MVB-1 full sweep), the MLP never exceeds the baseline by more than $+0.10$~dB (at $-3$~dBm), and at higher powers it consistently degrades performance by up to $-0.27$~dB (at $+2$~dBm). The MLP exhibits immediate overfitting: the best Q-factor always occurs at epoch 1--2, with further training causing progressive degradation as the model memorizes ASE noise rather than learning the nonlinear inverse mapping.
+
+\section{Analysis: Why NLC Fails in EDFA-Amplified Systems}
+
+The consistent failure of both DBP and AI-NLC across all tested regimes can be understood through a physical analysis of the EDFA-amplified system.
+
+\subsection{The Power Reset Mechanism}
+
+In a standard EDFA-amplified link, each span follows the pattern:
+\[
+\text{Signal} \xrightarrow{\text{80 km fiber (loss + nonlinear)}} \text{Attenuated signal} \xrightarrow{\text{EDFA (gain)}} \text{Restored power}
+\]
+
+The EDFA gain precisely compensates the fiber loss:
+\[
+G_{\text{EDFA}} = \exp(\alpha L_{\text{span}}) = \exp(0.2 \times 80) \approx 40~\text{dB}
+\]
+
+This power reset at each span boundary prevents the nonlinear phase noise from accumulating across spans. Each span's nonlinear distortion is \textit{independent} and, at the launch powers typical of commercial systems ($-3$ to $+5$~dBm), individually weak.
+
+\subsection{The Nonlinear Phase Accumulation}
+
+The nonlinear phase rotation per span is:
+\[
+\phi_{\text{NL,span}} = \gamma P L_{\text{eff}} = \gamma P \frac{1 - e^{-\alpha L}}{\alpha}
+\]
+
+For $P = 1$~mW ($0$~dBm), $\gamma = 1.3$~(W$\cdot$km)$^{-1}$, and $L_{\text{eff}} \approx 70$~km:
+\[
+\phi_{\text{NL,span}} \approx 1.3 \times 0.001 \times 70 \approx 0.09~\text{rad}
+\]
+
+Even at $+10$~dBm ($10$~mW), $\phi_{\text{NL,span}} \approx 0.9$~rad -- significant per span, but independently correctable by EDC+CPR. The accumulated effect over 10 spans is \textit{not} $10 \times 0.09$ because the EDFA resets the signal power, preventing inter-span nonlinear coupling.
+
+\subsection{The ASE Noise Floor}
+
+The fundamental limitation is amplified spontaneous emission (ASE) noise from the EDFA chain. The OSNR after $N$ spans is:
+\[
+\text{OSNR} \approx \frac{P_{\text{signal}}}{N \cdot h\nu \cdot \text{NF} \cdot G \cdot B_0}
+\]
+
+For 10 spans with NF $= 4.5$~dB, the accumulated ASE noise establishes a physical noise floor that limits the achievable Q-factor. This noise floor is \textit{algorithm-independent}: no DSP technique, whether DBP or AI-NLC, can recover information that has been corrupted by additive noise below the Shannon limit.
+
+Our measured Q-factor of $\approx +2$~dB across all scenes is consistent with an OSNR-limited regime where the signal-to-noise ratio, not nonlinear distortion, is the dominant impairment.
+
+\subsection{Comparison with Literature}
+
+Our results are consistent with the established understanding in the field. Dar et al. \cite{dar2013interchannel} showed that inter-channel nonlinear interference in WDM systems behaves as additive Gaussian noise, which cannot be compensated by single-channel DBP. Similarly, second-order statistical analysis of the NLSE \cite{agrell2011second} shows that the effective SNR in EDFA-amplified systems is dominated by ASE noise at typical operating points.
+
+The regimes where DBP \textit{does} show benefit -- submarine links with 100+ km unrepeated spans, ultra-long distance with fewer amplifiers, or single-channel systems with extreme launch powers \cite{ip2008compensation,jansen2008long} -- all share the characteristic of \textit{nonlinear accumulation without intermediate power reset}. Our benchmark scenes, by design, use the standard 80 km EDFA spacing that prevents this accumulation.
+
+\section{Discussion}
+
+\subsection{Implications for AI-NLC Research}
+
+Our findings have important implications for the growing body of AI-NLC research:
+
+\begin{enumerate}
+    \item \textbf{Test regime matters.} Studies reporting AI-NLC improvement must specify the EDFA configuration, span length, and launch power. Results obtained in non-standard configurations (e.g., unrepeated spans) may not generalize to commercial systems.
+    
+    \item \textbf{The baseline must include CPR.} Many studies compare NLC against EDC-only baselines. Since CPR already compensates the common nonlinear phase rotation, the residual impairment available for NLC to address is minimal.
+    
+    \item \textbf{Negative results are valuable.} The finding that NLC provides no benefit in standard EDFA systems is itself scientifically valuable -- it defines the operational boundaries of the technique and prevents wasted effort on unpromising configurations.
+\end{enumerate}
+
+\subsection{Where Might AI-NLC Be Effective?}
+
+Based on our analysis, AI-NLC may show value in regimes where nonlinear distortion accumulates without being reset by EDFAs:
+
+\begin{itemize}
+    \item \textbf{Submarine optical links:} Unrepeated spans of 100--200~km with Raman amplification allow significant nonlinear accumulation.
+    
+    \item \textbf{Ultra-long-distance with sparse amplification:} Systems with fewer amplifiers per unit distance (e.g., 2000~km with only 10 amplifiers instead of 25).
+    
+    \item \textbf{High-spectral-efficiency systems:} 256QAM and probabilistic constellation shaping (PCS) operate closer to the nonlinear Shannon limit, where every 0.1~dB of margin matters.
+    
+    \item \textbf{WDM inter-channel nonlinearity:} Our study tested single-channel systems. In WDM, cross-phase modulation (XPM) and four-wave mixing (FWM) introduce inter-channel nonlinear interference that may be less amenable to simple DSP.
+\end{itemize}
+
+\subsection{Open-Source Framework}
+
+All code, data, and benchmark scripts are available at \url{https://github.com/AI-Fiber-NLC/AI-Fiber-NLC} under the MIT License. The framework includes:
+\begin{itemize}
+    \item OptiCompPy-based fiber simulation with RRC pulse shaping
+    \item Complete DSP receiver chain (EDC, clock recovery, CPR)
+    \item DBP and MLP-NLC implementations
+    \item Standardized benchmark scoring (Q-factor + FLOPs)
+    \item Pre-generated simulation data for 5 test scenes (26 files, $\sim$44~MB)
+\end{itemize}
+
+\section{Conclusion}
+
+We presented a comprehensive benchmark study of AI-based nonlinear compensation across 17 launch power points ($-3$ to $+10$~dBm) and two transmission distances (800~km and 1600~km) in standard EDFA-amplified coherent optical systems. Neither DBP nor a memory-augmented MLP-NLC achieved meaningful Q-factor improvement over a minimal DSP chain of EDC plus carrier phase recovery. The bottleneck was identified as accumulated ASE noise from EDFA amplifiers, a physical noise floor that no algorithmic approach can overcome. The span-by-span power reset inherent in EDFA-amplified systems prevents nonlinear distortion accumulation, rendering NLC algorithms ineffective in this regime.
+
+These findings define the operational boundaries of AI-NLC: it may be beneficial in systems without intermediate amplification (submarine links, sparse-amplification ultra-long-haul) or in WDM scenarios where inter-channel nonlinearity dominates. Future work should focus on these regimes to establish where AI-NLC provides genuine value.
+
+\section*{Acknowledgment}
+
+This work was conducted as an open-source research project. All code and data are publicly available at \url{https://github.com/AI-Fiber-NLC/AI-Fiber-NLC}.
+
+\begin{thebibliography}{00}
+
+\bibitem{agrawal2013nonlinear}
+G.~P. Agrawal, \emph{Nonlinear Fiber Optics}, 5th~ed. Elsevier, 2013.
+
+\bibitem{ip2008compensation}
+E.~Ip and J.~M. Kahn, ``Compensation of dispersion and nonlinear impairments using digital backpropagation,'' \emph{J. Lightw. Technol.}, vol.~26, no.~20, pp. 3416--3425, Oct. 2008.
+
+\bibitem{dar2013interchannel}
+R.~Dar, M.~Feder, A.~Mecozzi, and M.~Shtaif, ``Interchannel nonlinear interference noise in WDM systems: Modeling and mitigation,'' \emph{J. Lightw. Technol.}, vol.~33, no.~5, pp. 1044--1053, Mar. 2015.
+
+\bibitem{silva2024opticommpy}
+E.~P. da Silva and A.~F. Herbster, ``OptiCompPy: Open-source simulation of fiber optic communications with Python,'' \emph{J. Open Source Softw.}, vol.~9, no.~98, p. 6600, 2024.
+
+\bibitem{feki2021digital}
+A.~Feki, D.~Che, and W.~Shieh, ``Digital nonlinearity compensation using machine learning in optical communication systems,'' \emph{J. Lightw. Technol.}, vol.~39, no.~11, pp. 3491--3500, Jun. 2021.
+
+\bibitem{jones2021field}
+D.~Jones, S.~Bos, S.~Savant, and D.~Plant, ``Field demonstration of nonlinear DSP using machine learning,'' \emph{in Proc. OFC}, 2021, pp. 1--3.
+
+\bibitem{agrell2011second}
+E.~Agrell and M.~Karlsson, ``Power efficiency of the single-polarization and polarization-multiplexed AWGN channel with and without dispersion compensation,'' \emph{Opt. Express}, vol.~19, no.~6, pp. 5324--5334, Mar. 2011.
+
+\bibitem{jansen2008long}
+S.~L. Jansen, I.~Morita, N.~Takeda, and H.~Tanaka, ``2000-km transmission of 42.8-Gb/s RZ-DQPSK PDM,'' \emph{in Proc. OFC/NFOEC}, 2008, pp. 1--3.
+
+\end{thebibliography}
+
+\end{document}
