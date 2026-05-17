@@ -1,4 +1,4 @@
-# AI-Fiber-NLC 🌊
+# AI-Fiber-NLC
 
 > **Open-source framework for AI-based nonlinear compensation in optical fiber systems**
 
@@ -9,30 +9,26 @@
 
 ---
 
-## Vision
+## 📄 Paper
 
-Modern coherent optical fiber systems are approaching the physical limits defined by the **nonlinear Shannon limit**. Kerr-effect-induced nonlinear phase noise is the core bottleneck limiting transmission distance and spectral efficiency.
+**Limits of AI-Based Nonlinear Compensation in EDFA-Amplified Coherent Optical Fiber Systems**
 
-This project builds an open, modular, reproducible AI framework for nonlinear compensation (NLC), bridging academic research and industrial deployment.
+A comprehensive benchmark study evaluating AI-NLC across 17 launch power points (−3 to +10 dBm) and two transmission distances (800 km and 1600 km).
 
-**Core thesis:** Upgrading only the terminal equipment (transceivers/DSP) without touching the deployed fiber is the most cost-effective path to higher capacity — enabling operators to leverage the existing 6.5 billion fiber-km already in the ground.
+**Key finding:** Neither DBP nor AI-NLC achieves meaningful Q-factor improvement over a minimal DSP chain (EDC + CPR) in standard EDFA-amplified systems. The bottleneck is accumulated ASE noise, a physical noise floor that no algorithmic approach can overcome.
+
+- **Paper source:** [`paper/paper.tex`](paper/paper.tex)
+- **Citation:** [`CITATION.cff`](CITATION.cff)
+
+---
 
 ## Quick Start
 
-### Try in Colab
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-Fiber-NLC/AI-Fiber-NLC/blob/main/notebooks/quickstart_demo.ipynb)
-
-5-minute interactive demo: see constellation diagrams before and after AI compensation.
-
-### Local Install
+### Install
 
 ```bash
 git clone https://github.com/AI-Fiber-NLC/AI-Fiber-NLC.git
 cd AI-Fiber-NLC
-pip install -r requirements.txt
-
-# Or editable install (development mode)
 pip install -e ".[dev]"
 ```
 
@@ -42,72 +38,86 @@ pip install -e ".[dev]"
 pytest tests/ -v
 ```
 
-### Run Benchmark
+### Generate Simulation Data
 
 ```bash
-# Validate a benchmark submission
-python -m src.benchmark.protocol result.json mvb1
+python scripts/generate_data.py --scenarios mvb1
 ```
+
+### Run DBP Benchmark
+
+```bash
+python scripts/run_dbp_benchmark.py --scenario mvb1 --power-index 4
+```
+
+### Train MLP-NLC (DSP chain integrated)
+
+```bash
+python scripts/train_mlp_dsp.py --scenario mvb1 --power-index 4 --epochs 50
+```
+
+---
+
+## Benchmark Results Summary
+
+| Scene | Distance | Power Range | Baseline Q | DBP Q | Improvement |
+|-------|----------|-------------|-----------|-------|------------|
+| MVB-1 | 800 km | −3 to +5 dBm | +1.91 to +2.20 | +1.85 to +2.20 | −0.27 to +0.03 dB |
+| MVB-4 | 800 km | +7 to +10 dBm | +2.01 to +2.07 | +2.01 to +2.09 | −0.01 to +0.02 dB |
+| MVB-5 | 1600 km | 0 to +3 dBm | +1.92 to +2.16 | +1.92 to +2.19 | −0.04 to +0.03 dB |
+
+**DBP never shows meaningful improvement (>0.05 dB) in any tested regime.**
+
+---
 
 ## Project Structure
 
 ```
-AI-Fiber-NLC/
+├── paper/                 # Academic paper (LaTeX)
+│   └── paper.tex
 ├── src/
-│   ├── benchmark/         # Benchmark validation protocol (core)
-│   │   └── protocol.py    # Scene definitions + scoring + validation
-│   ├── models/            # NLC model implementations
-│   │   ├── mlp_nlc.py     # MLP baseline
-│   │   ├── baseline_dbp.py# Traditional DBP reference
-│   │   └── ...
-│   ├── data/              # Fiber simulation data generation
-│   └── utils/             # Visualization, config
-├── tests/                 # Unit tests
-├── benchmark/             # Benchmark configs + results
-├── notebooks/             # Interactive demos
-└── docs/                  # Documentation
+│   ├── benchmark/         # Protocol: scenes, scoring, validation
+│   ├── data/              # Simulation (OptiCommPy) and data loading
+│   ├── dsp/               # DSP receiver chain (EDC, CR, CPR)
+│   ├── models/            # NLC models (DBP, MLP, CNN)
+│   └── training/          # Training utilities
+├── data/raw/              # Pre-generated simulation data
+│   ├── MVB-1/             # 16QAM, 800 km, −3 to +5 dBm
+│   ├── MVB-3/             # 64QAM+PCS, 800 km
+│   ├── MVB-4/             # 16QAM, 800 km, +7 to +10 dBm
+│   └── MVB-5/             # 16QAM, 1600 km, 0 to +3 dBm
+├── scripts/               # CLI tools
+├── notebooks/             # Colab demo
+├── tests/                 # 79 unit tests
+└── models/                # Pre-trained checkpoints
 ```
 
-## Benchmark Protocol
+---
 
-We use a **result-oriented validation** approach — no subjective review, no complex cryptographic proofs:
+## Available Scenes
 
-| Metric | Description |
-|--------|-------------|
-| Q-factor improvement (dB) | Raw gain over uncompensated RX |
-| Normalized effect (ΔQ_norm) | Score relative to DBP baseline [0, 1.5] |
-| Normalized efficiency (E_norm) | Computational cost relative to DBP [0, 1] |
-| Composite score | 0.7 × effect + 0.3 × efficiency |
+| Scene | Modulation | Distance | Spans | Power Range | Status |
+|-------|-----------|----------|-------|-------------|--------|
+| MVB-1 | 16QAM | 800 km | 10 | −3 to +5 dBm | ✅ Data available |
+| MVB-3 | 64QAM+PCS | 800 km | 10 | −3 to +5 dBm | ✅ Data available |
+| MVB-4 | 16QAM | 800 km | 10 | +7 to +10 dBm | ✅ Data available |
+| MVB-5 | 16QAM | 1600 km | 20 | 0 to +3 dBm | ✅ Data available |
 
-Full protocol: see `src/benchmark/protocol.py` and [docs/benchmark-protocol.md](docs/benchmark-protocol.md).
-
-## Benchmark Scenes
-
-| Scene | Polarization | Modulation | Distance | Key Feature |
-|-------|-------------|------------|----------|-------------|
-| **MVB-1** | Single-pol | 16QAM | 800 km | Baseline — low compute |
-| **MVB-2** | Dual-pol | 16QAM | 800 km | PMD compensation |
-| **MVB-3** | Single-pol | 64QAM + PCS | 800 km | Near Shannon limit |
-
-## Contributing
-
-All forms of contribution are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
-
-**Quick path:**
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes
-4. Push and open a Pull Request
-
-**Submitting benchmark results?** Use the "Benchmark Submission" issue template and include all required fields.
+---
 
 ## License
 
 [MIT License](LICENSE)
 
-## References
+## Citing
 
-- Meta-DSP: [arXiv:2311.10416](https://arxiv.org/abs/2311.10416) (Huawei Noah's Ark Lab)
-- FONTE-EID: [GitHub](https://github.com/FONTE-EID/fiber-optic-transmission-system-modeling)
-- OptiCommPy: [GitHub](https://github.com/edsonportosilva/OptiCommPy)
-- A Survey on ML/DL for Optical Communications: [arXiv:2412.17826](https://arxiv.org/pdf/2412.17826)
+If you use this framework, please cite:
+
+```bibtex
+@misc{ai-fiber-nlc-2026,
+  title = {Limits of {AI}-Based Nonlinear Compensation in {EDFA}-Amplified Coherent Optical Fiber Systems},
+  author = {{AI-Fiber-NLC Contributors}},
+  year = {2026},
+  howpublished = {\url{https://github.com/AI-Fiber-NLC/AI-Fiber-NLC}},
+}
+```

@@ -1,0 +1,19 @@
+# Citation
+
+If you use AI-Fiber-NLC in your research, please cite:
+
+```bibtex
+@misc{ai-fiber-nlc-2026,
+  title = {Limits of {AI}-Based Nonlinear Compensation in {EDFA}-Amplified Coherent Optical Fiber Systems},
+  author = {{AI-Fiber-NLC Contributors}},
+  year = {2026},
+  howpublished = {\url{https://github.com/AI-Fiber-NLC/AI-Fiber-NLC}},
+  note = {Preprint available at \url{https://github.com/AI-Fiber-NLC/AI-Fiber-NLC/blob/main/paper/paper.tex}}
+}
+```
+
+## Project
+
+- **GitHub:** https://github.com/AI-Fiber-NLC/AI-Fiber-NLC
+- **Paper:** [paper/paper.tex](paper/paper.tex)
+- **License:** MIT
