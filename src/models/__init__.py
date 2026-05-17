@@ -1,2 +1,2 @@
 # SPDX-License-Identifier: MIT
-"""核心源代碼."""
+"""Core source code."""

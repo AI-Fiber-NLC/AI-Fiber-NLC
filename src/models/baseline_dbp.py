@@ -133,3 +133,7 @@ class DBPCompensator:
             "processing_time_sec": round(elapsed, 3),
             "flops_per_symbol": round(self.flops_per_symbol, 1),
         }
+
+    def get_flops_per_symbol(self) -> float:
+        """Return estimated FLOPs per symbol for DBP."""
+        return self.flops_per_symbol
