@@ -23,7 +23,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.benchmark.protocol import SCENES, SceneParams
+from src.benchmark.protocol import SCENES, EXTENDED_SCENES, SceneParams
 from src.models.baseline_dbp import DBPCompensator
 from src.dsp.receiver import process_receiver, DSPResult
 
@@ -62,7 +62,8 @@ def compute_dbp_q(rx: np.ndarray, dbp: DBPCompensator,
 def run_single(scenario_key: str, power_index: int, steps_per_span: int,
                data_dir: Path) -> dict:
     """Run DBP benchmark on a single power point."""
-    scene = SCENES[scenario_key]
+    ALL_SCENES = {**SCENES, **EXTENDED_SCENES}
+    scene = ALL_SCENES[scenario_key]
     lo, hi = scene.tx_power_range_dbm
     n_pts = scene.tx_power_points
     powers = np.linspace(lo, hi, n_pts)
@@ -107,7 +108,7 @@ def run_single(scenario_key: str, power_index: int, steps_per_span: int,
 def main():
     parser = argparse.ArgumentParser(description="Run DBP benchmark")
     parser.add_argument("--scenario", type=str, default="mvb1",
-                        choices=["mvb1", "mvb3"])
+                        choices=["mvb1", "mvb3", "mvb4", "mvb5"])
     parser.add_argument("--power-index", type=int, default=4)
     parser.add_argument("--steps", type=int, default=10)
     parser.add_argument("--data-dir", type=str, default="./data/raw")
@@ -119,7 +120,9 @@ def main():
         print(f"Error: data directory not found: {data_dir}")
         sys.exit(1)
 
-    scene = SCENES[args.scenario]
+    # Merge scene registries
+    ALL_SCENES = {**SCENES, **EXTENDED_SCENES}
+    scene = ALL_SCENES[args.scenario]
     lo, hi = scene.tx_power_range_dbm
     n_pts = scene.tx_power_points
     powers = np.linspace(lo, hi, n_pts)

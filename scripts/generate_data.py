@@ -23,7 +23,7 @@ import numpy as np
 # Project root
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.benchmark.protocol import SCENES, SceneParams, scene_to_yaml
+from src.benchmark.protocol import SCENES, EXTENDED_SCENES, SceneParams, scene_to_yaml
 from src.data.simulator import FiberSimulator
 
 
@@ -107,7 +107,7 @@ def main() -> None:
         "--scenarios",
         nargs="+",
         default=["mvb1"],
-        choices=["mvb1", "mvb2", "mvb3", "all"],
+        choices=["mvb1", "mvb2", "mvb3", "mvb4", "mvb5", "all"],
         help="Scenarios to generate (default: mvb1)",
     )
     args = parser.parse_args()
@@ -115,9 +115,12 @@ def main() -> None:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Merge scene registries
+    ALL_SCENES = {**SCENES, **EXTENDED_SCENES}
+
     # Resolve scenario list
     if "all" in args.scenarios:
-        scenario_keys = list(SCENES.keys())
+        scenario_keys = list(ALL_SCENES.keys())
     else:
         scenario_keys = args.scenarios
 
@@ -129,7 +132,7 @@ def main() -> None:
     grand_total_bytes = 0
 
     for key in scenario_keys:
-        scene = SCENES[key]
+        scene = ALL_SCENES[key]
         print(f"\n{'=' * 40}")
         print(f"Scenario: {scene.name}")
         print(f"  Polarization: {scene.polarization}")

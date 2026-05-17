@@ -81,6 +81,38 @@ SCENES: Dict[str, SceneParams] = {
     "mvb3": MVB3,
 }
 
+# ── Extended scenes for high-power and long-distance regimes ──
+# These target regimes where nonlinear effects dominate and AI-NLC
+# is expected to show value over traditional DSP.
+
+# High-power regime: +7 to +10 dBm, 800km
+# Nonlinear phase noise becomes significant at these powers
+MVB4 = SceneParams(
+    name="MVB-4", fiber_length_km=80.0, num_spans=10,
+    alpha_db_per_km=0.2, D_ps_per_nm_km=16.0, gamma_per_W_km=1.3,
+    pmd_ps_per_sqrt_km=0.0, modulation="16QAM", baud_rate_GBd=32.0,
+    polarization="single", pcs_enabled=False,
+    tx_power_range_dbm=(7.0, 10.0), tx_power_points=4,
+    n_symbols=2**16, seed=42, fec_threshold_ber=3.8e-3,
+)
+
+# Long-distance regime: 1600km (20 spans), moderate power
+# Nonlinear effects accumulate over many spans
+MVB5 = SceneParams(
+    name="MVB-5", fiber_length_km=80.0, num_spans=20,
+    alpha_db_per_km=0.2, D_ps_per_nm_km=16.0, gamma_per_W_km=1.3,
+    pmd_ps_per_sqrt_km=0.0, modulation="16QAM", baud_rate_GBd=32.0,
+    polarization="single", pcs_enabled=False,
+    tx_power_range_dbm=(0.0, 3.0), tx_power_points=4,
+    n_symbols=2**16, seed=42, fec_threshold_ber=3.8e-3,
+)
+
+# Extended scenes registry
+EXTENDED_SCENES: Dict[str, SceneParams] = {
+    "mvb4": MVB4,
+    "mvb5": MVB5,
+}
+
 
 # ─────────────────────────────────────────────────────────────────────
 # 2. Composite Scoring Formula
